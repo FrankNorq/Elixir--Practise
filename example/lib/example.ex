@@ -8,14 +8,11 @@ Supervisor.start_link([], strategy: :one_for_one)
 
 
 def main do
-
-name = "Frank"
-status = Enum.random([:gold, :"not a member"])
- case status do
-  :gold -> IO.puts("welcome to the fancy lounge, #{name}")
-  :"not a member" -> IO.puts("lol get out ")
- _ -> IO.puts("get out skkrtboy")
-end
+# IO.puts("interpolation looks like \#{}")
+a = 10
+a = a + 5.0
+b = 3.7
+IO.puts(a+b)
 end
 
 
