@@ -32,7 +32,12 @@ defmodule ShoppingCart do
     List.last(cart)
   end
 
-  def get_total(cart) do
-    List.foldl(cart, 0, fn item, total -> item(price + total) end)
+  def get_total(cart, discount \\ 0) do
+    Enum.reduce(cart, 0, fn item, total -> item.price + total end)
+    |> subtract_discount(discount)
+  end
+
+  defp subtract_discount(total, discount) do
+    total * ((100 - discount) / 100)
   end
 end
