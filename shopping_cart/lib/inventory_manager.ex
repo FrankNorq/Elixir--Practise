@@ -1,7 +1,15 @@
 defmodule InventoryManager do
+  # def get_product(inventory, name) do
+  #   Enum.find(inventory, fn product -> product.name == name end)
+  # end
+  # recurions version
   def get_product(inventory, name) do
-    Enum.find(inventory, fn product -> product.name == name end)
+    find_product(inventory, name)
   end
+
+  defp find_product([], _name), do: nil
+  defp find_product([%Product{name: name} = product | tail], name), do: product
+  defp find_product([_product | rest_inventory], name), do: find_product(rest_inventory, name)
 
   def update_inventory(inventory, name, amount) do
     Enum.map(inventory, fn product ->
