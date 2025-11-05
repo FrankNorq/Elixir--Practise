@@ -30,4 +30,14 @@ defmodule InventoryManager do
       end
     end)
   end
+
+  def update_supplier_phone(inventory, product_name, new_phone) do
+    Enum.map(inventory, fn product ->
+      if product.name == product_name do
+        %Product{product | supplier: %Supplier{product.supplier | phone: new_phone}}
+      else
+        product
+      end
+    end)
+  end
 end
