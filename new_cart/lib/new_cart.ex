@@ -14,6 +14,16 @@ defmodule NewCart do
         IO.puts("item added to cart: #{item_name}")
         listen(new_cart)
 
+      {:remove_item, item_name} ->
+        if item_name in cart do
+          new_cart = List.delete(cart, item_name)
+          IO.puts("Item removed: #{item_name}")
+          listen(new_cart)
+        else
+          IO.puts("item not in cart")
+          listen(cart)
+        end
+
       :show ->
         IO.puts("cart: #{inspect(cart)}")
         listen(cart)
