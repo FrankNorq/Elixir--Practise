@@ -1,23 +1,41 @@
 defmodule CartServer do
-  @moduledoc """
-  Documentation for `CartServer`.
-  """
   use GenServer
 
-  # client
-  def start_link do
-    GenServer.start_link(CartServer, %{cart: [], timer_pid: nil}, name: :cart_server)
+  ## client
+  def start_link(name) do
+    IO.puts("Cart Server starting…")
+    GenServer.start_link(CartServer, %{}, name: name)
   end
 
-  def cart_total, do: GenServer.call(:cart_server, :total)
-  def add_item(item), do: GenServer.cast(:cart_server, {:add_item, item})
+  def start_child(name) when is_atom(name) do
+    DynamicSupervisor.start_child(:dynamic_cart_sup, {CartServer, name})
+  end
 
-  # callbacks
+  def child_spec(name) do
+    %{
+      id: __MODULE__,
+      restart: :permanent,
+      shutdown: 5000,
+      start: {__MODULE__, :start_link, [name]},
+      type: :worker
+    }
+  end
+
+  def cart_total(cart_id) when is_atom(cart_id), do: GenServer.call(cart_id, :total)
+
+  def add_item(cart_id, item) when is_atom(cart_id),
+    do: GenServer.cast(cart_id, {:add_item, item})
+
+  ## callbacks
+  @impl true
+  def init(:ok) do
+    {:ok, %{cart: [], timer_ref: nil}}
+  end
+
   @impl true
   def handle_call(:total, _from, state) do
     total =
-      state.cart
-      |> Enum.reduce(0, fn item, acc -> acc + item[:price] * item[:qty] end)
+      Enum.reduce(state.cart, 0.0, fn item, acc -> acc + item[:price] * item[:qty] end)
 
     {:reply, total, state}
   end
@@ -25,7 +43,8 @@ defmodule CartServer do
   @impl true
   def handle_cast({:add_item, item}, state) do
     new_state =
-      %{state | cart: [item | state.cart]}
+      state
+      |> Map.update!(:cart, fn cart -> [item | cart] end)
       |> reminder_timer()
 
     {:noreply, new_state}
@@ -33,12 +52,12 @@ defmodule CartServer do
 
   @impl true
   def handle_info(:reminder, state) do
-    IO.puts("Hey dont forget your cart")
-    {:noreply, state}
+    IO.puts("Hey don't forget your cart")
+    {:noreply, %{state | timer_ref: nil}}
   end
 
   defp reminder_timer(state) do
-    case Map.get(state, :timer_ref) do
+    case state.timer_ref do
       nil ->
         ref = Process.send_after(self(), :reminder, 10_000)
         %{state | timer_ref: ref}
