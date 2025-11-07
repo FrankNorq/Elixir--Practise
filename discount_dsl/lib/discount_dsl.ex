@@ -19,19 +19,36 @@ defmodule DiscountDsl do
           end)
         end
 
-        defp apply_discount_rule(product, {_name, condition_function, action_function}) do
-          if(apply(__MODULE__, condition_function, [product])) do
-            apply(__MODULE__, action_function, [product])
-          else
-            product
+        defp apply_discount_rule(
+               product,
+               {_name, required_fields, condition_function, action_function}
+             ) do
+          case(validate_and_apply(product, required_fields, condition_function)) do
+            :apply -> apply(__MODULE__, action_function, [product])
+            :skip -> product
           end
+        end
+
+        defp apply_discount_rule(product, _), do: product
+
+        defp validate_and_apply(product, required_fields, condition_function) do
+          if validate_product(product, required_fields) and
+               apply(__MODULE__, condition_function, [product]) do
+            :apply
+          else
+            :skip
+          end
+        end
+
+        defp validate_product(product, required_fields) do
+          Enum.all?(required_fields, &Map.has_key?(product, &1))
         end
       end
     end
 
-    defmacro discount(name, condition, action) do
+    defmacro discount(name, required_fields, condition, action) do
       quote do
-        @discounts {unquote(name), unquote(condition), unquote(action)}
+        @discounts {unquote(name), unquote(required_fields), unquote(condition), unquote(action)}
       end
     end
   end

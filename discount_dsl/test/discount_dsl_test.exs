@@ -1,5 +1,6 @@
 defmodule DiscountDslTest do
   use ExUnit.Case
+
   doctest DiscountDsl
 
   test "Ensure the Module Loads" do
@@ -38,4 +39,9 @@ defmodule DiscountDslTest do
   end
 
   # 5
+  test "invalid product: missing price" do
+    product = %{category: "Toys"}
+    discounted_product = Discounts.apply_discounts(product)
+    assert discounted_product == product
+  end
 end
